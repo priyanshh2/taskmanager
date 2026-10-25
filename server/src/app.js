@@ -23,8 +23,8 @@ app.use(
       if (
         allowedOrigins.includes('*') ||
         allowedOrigins.includes(normalizedOrigin) ||
-        (process.env.NODE_ENV !== 'production' && /^http:\/\/localhost(:\d+)?$/.test(normalizedOrigin)) ||
-        (allowedOrigins.some((o) => o.includes('.vercel.app')) && /\.vercel\.app$/.test(normalizedOrigin))
+        /\.vercel\.app$/.test(normalizedOrigin) ||
+        /^http:\/\/localhost(:\d+)?$/.test(normalizedOrigin)
       ) {
         return callback(null, true)
       }

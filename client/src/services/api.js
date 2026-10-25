@@ -136,6 +136,13 @@ export async function apiFetch(endpoint, options = {}, onUnauthorized = null) {
 }
 
 /**
+ * Health Check API Endpoint
+ */
+export const healthAPI = {
+  check: () => apiFetch('/api/health'),
+}
+
+/**
  * Auth API Endpoints
  */
 export const authAPI = {

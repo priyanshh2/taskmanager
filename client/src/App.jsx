@@ -4,6 +4,7 @@ import LoginForm from './components/LoginForm.jsx'
 import RegisterForm from './components/RegisterForm.jsx'
 import ProtectedDashboard from './components/ProtectedDashboard.jsx'
 import { CheckCircle2, Shield, Loader2, Server, Database, RefreshCw } from 'lucide-react'
+import { healthAPI } from './services/api.js'
 
 function MainContent() {
   const { isAuthenticated, loading } = useAuth()
@@ -16,11 +17,8 @@ function MainContent() {
   const checkHealth = async () => {
     setHealthLoading(true)
     try {
-      const response = await fetch('/api/health')
-      if (response.ok) {
-        const data = await response.json()
-        setHealthData(data)
-      }
+      const data = await healthAPI.check()
+      setHealthData(data)
     } catch {
       setHealthData(null)
     } finally {

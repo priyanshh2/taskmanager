@@ -98,7 +98,12 @@ If you prefer configuring the Web Service manually:
 
 ## Step 3: Deploy Frontend to Vercel
 
-### Option A: Via Vercel Dashboard
+Your Render backend is already live and verified at:
+```text
+https://taskmanager-nod4.onrender.com
+```
+
+### Steps to Deploy on Vercel:
 
 1. Log in to [vercel.com](https://vercel.com/).
 2. Click **Add New...** -> **Project**.
@@ -108,10 +113,11 @@ If you prefer configuring the Web Service manually:
    - **Framework Preset**: `Vite`
    - **Build Command**: `npm run build` (or default)
    - **Output Directory**: `dist` (or default)
-5. Expand **Environment Variables** and add:
+5. Under **Environment Variables**:
    | Key | Value |
    | :--- | :--- |
-   | `VITE_API_URL` | Your Render backend URL from Step 2 (e.g., `https://taskflow-server-xxxx.onrender.com`) |
+   | `VITE_API_URL` | `https://taskmanager-nod4.onrender.com` |
+   *(Note: This is also pre-configured in `client/.env.production`)*
 6. Click **Deploy**.
 7. Once completed, Vercel will assign a production URL (e.g., `https://taskmanager-xxxx.vercel.app`).
 
