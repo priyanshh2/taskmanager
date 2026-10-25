@@ -1,0 +1,22 @@
+{
+  "name": "taskflow",
+  "version": "1.0.0",
+  "private": true,
+  "description": "TaskFlow — Full-Stack Personal Task Management Application (MERN Stack)",
+  "scripts": {
+    "install:all": "npm --prefix client install && npm --prefix server install",
+    "client:install": "npm --prefix client install",
+    "server:install": "npm --prefix server install",
+    "dev:client": "npm --prefix client run dev",
+    "dev:server": "npm --prefix server run dev",
+    "start:server": "npm --prefix server start",
+    "build:client": "npm --prefix client run build",
+    "lint:client": "npm --prefix client run lint",
+    "test:server": "npm --prefix server test",
+    "test:auth": "npm --prefix server run test:auth",
+    "test:tasks": "npm --prefix server run test:tasks",
+    "test:phase4": "npm --prefix server run test:phase4",
+    "test:audit": "npm --prefix server run test:audit",
+    "test": "npm run test:server"
+  }
+}
