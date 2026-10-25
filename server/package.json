@@ -11,7 +11,8 @@
     "test:auth": "node test-auth.js",
     "test:tasks": "node test-tasks.js",
     "test:phase4": "node test-phase4.js",
-    "test:audit": "node test-audit.js"
+    "test:audit": "node test-audit.js",
+    "migrate": "node migrate.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

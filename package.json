@@ -19,6 +19,7 @@
     "test:tasks": "npm --prefix server run test:tasks",
     "test:phase4": "npm --prefix server run test:phase4",
     "test:audit": "npm --prefix server run test:audit",
-    "test": "npm run test:server"
+    "test": "npm run test:server",
+    "migrate": "npm --prefix server run migrate"
   }
 }
