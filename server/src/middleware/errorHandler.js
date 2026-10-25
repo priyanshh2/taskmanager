@@ -19,6 +19,11 @@ export const errorHandler = (err, req, res, next) => {
     statusCode = err.status
   }
 
+  // Handle CORS blocked origin errors
+  if (err.message && err.message.startsWith('CORS blocked')) {
+    statusCode = 403
+  }
+
   // Handle SyntaxError from malformed JSON payloads in request body
   if (err instanceof SyntaxError && 'body' in err) {
     statusCode = 400

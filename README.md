@@ -214,3 +214,15 @@ npm run build:client
 - **Data Scoping**: Every task operation is double-scoped to `{ _id: taskId, user: req.user._id }`.
 - **Token Storage**: Stored in `sessionStorage` for local assessment. Note: in production environments, HttpOnly, SameSite=Strict cookies or in-memory tokens paired with refresh tokens provide heightened XSS protection.
 - **Unified Errors**: Non-existent tasks and foreign tasks return identical `404 Not Found` responses to prevent resource enumeration.
+
+---
+
+## 🚀 Production Deployment (Vercel & Render)
+
+The application is pre-configured for deployment on **Vercel** (Frontend) and **Render** (Backend API) with MongoDB Atlas:
+
+- 📋 **Complete Step-by-Step Instructions**: See [DEPLOYMENT.md](DEPLOYMENT.md).
+- ⚙️ **Render Configuration**: [`render.yaml`](render.yaml) is included for 1-click Blueprint deployment.
+- ⚙️ **Vercel Configuration**: [`vercel.json`](vercel.json) and [`client/vercel.json`](client/vercel.json) are included for automated single-page application rewrites.
+- 🌐 **Environment Templates**: Documented in [`client/.env.example`](client/.env.example) and [`server/.env.example`](server/.env.example).
+

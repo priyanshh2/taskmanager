@@ -6,10 +6,31 @@ import { notFound, errorHandler } from './middleware/errorHandler.js'
 const app = express()
 
 // CORS Configuration
-const allowedOrigin = process.env.CLIENT_ORIGIN || 'http://localhost:5173'
+const rawOrigins = process.env.CLIENT_ORIGIN || 'http://localhost:5173'
+const allowedOrigins = rawOrigins
+  .split(',')
+  .map((o) => o.trim().replace(/\/$/, ''))
+  .filter(Boolean)
+
 app.use(
   cors({
-    origin: allowedOrigin,
+    origin: (origin, callback) => {
+      // Allow requests with no origin (e.g. mobile apps, curl, Render health checks, Postman)
+      if (!origin) return callback(null, true)
+
+      const normalizedOrigin = origin.replace(/\/$/, '')
+
+      if (
+        allowedOrigins.includes('*') ||
+        allowedOrigins.includes(normalizedOrigin) ||
+        (process.env.NODE_ENV !== 'production' && /^http:\/\/localhost(:\d+)?$/.test(normalizedOrigin)) ||
+        (allowedOrigins.some((o) => o.includes('.vercel.app')) && /\.vercel\.app$/.test(normalizedOrigin))
+      ) {
+        return callback(null, true)
+      }
+
+      return callback(new Error(`CORS blocked for origin: ${origin}`))
+    },
     credentials: true,
   })
 )

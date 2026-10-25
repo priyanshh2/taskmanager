@@ -12,8 +12,8 @@ const PORT = process.env.PORT || 5000
 await connectDB()
 
 // Start Express HTTP Server
-const server = app.listen(PORT, () => {
-  console.log(`🚀 [Server Running] TaskFlow API listening on http://localhost:${PORT}`)
+const server = app.listen(PORT, '0.0.0.0', () => {
+  console.log(`🚀 [Server Running] TaskFlow API listening on port ${PORT}`)
   console.log(`🔍 [Health Check] Visit http://localhost:${PORT}/api/health`)
 })
 

@@ -71,6 +71,27 @@ export const clearAuthSession = () => {
 }
 
 /**
+ * API Base URL resolution:
+ * - In local development or if unset, defaults to '' (uses Vite proxy).
+ * - In production (e.g. deployed to Vercel), set VITE_API_URL to your Render backend URL:
+ *   e.g. VITE_API_URL=https://your-service.onrender.com
+ */
+const rawBaseUrl = (import.meta.env.VITE_API_URL || '').trim().replace(/\/$/, '')
+
+const resolveApiUrl = (endpoint) => {
+  if (endpoint.startsWith('http://') || endpoint.startsWith('https://')) {
+    return endpoint
+  }
+  if (!rawBaseUrl) {
+    return endpoint
+  }
+  if (rawBaseUrl.endsWith('/api') && endpoint.startsWith('/api')) {
+    return `${rawBaseUrl}${endpoint.slice(4)}`
+  }
+  return `${rawBaseUrl}${endpoint}`
+}
+
+/**
  * Centralized fetch helper with automatic Authorization header injection
  * and 401 handling for expired/invalid tokens.
  */
@@ -87,7 +108,9 @@ export async function apiFetch(endpoint, options = {}, onUnauthorized = null) {
     headers['Authorization'] = `Bearer ${token}`
   }
 
-  const response = await fetch(endpoint, {
+  const url = resolveApiUrl(endpoint)
+
+  const response = await fetch(url, {
     ...options,
     headers,
   })
