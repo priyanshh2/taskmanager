@@ -12,7 +12,8 @@
     "test:tasks": "node test-tasks.js",
     "test:phase4": "node test-phase4.js",
     "test:audit": "node test-audit.js",
-    "migrate": "node migrate.js"
+    "migrate": "node migrate.js",
+    "build": "node -e \"console.log('Server build complete')\""
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
