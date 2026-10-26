@@ -1,5 +1,5 @@
 import { isTaskOverdue } from '../utils/date.js'
-import { CheckCircle2, Clock, AlertCircle, Layers } from 'lucide-react'
+import { CheckSquare, CheckCircle2, Clock, AlertCircle } from 'lucide-react'
 
 export default function DashboardStats({ tasks, activeStatusFilter, onStatusFilterChange }) {
   const total = tasks.length
@@ -9,85 +9,76 @@ export default function DashboardStats({ tasks, activeStatusFilter, onStatusFilt
 
   const stats = [
     {
-      id: 'all',
+      id: 'All',
       label: 'Total Tasks',
       value: total,
-      icon: Layers,
-      color: 'indigo',
-      borderColor: activeStatusFilter === 'All' ? 'border-indigo-500' : 'border-slate-800',
-      textColor: 'text-indigo-400',
-      bgColor: 'bg-indigo-500/10',
-      glowColor: 'group-hover:border-indigo-500/50',
-      filterValue: 'All',
+      subtext: 'All time',
+      icon: CheckSquare,
+      boxBg: 'bg-[var(--box-blue-bg)]',
+      boxColor: 'text-[var(--box-blue-text)]',
     },
     {
-      id: 'pending',
-      label: 'Pending',
-      value: pending,
-      icon: Clock,
-      color: 'amber',
-      borderColor: activeStatusFilter === 'Pending' ? 'border-amber-500' : 'border-slate-800',
-      textColor: 'text-amber-400',
-      bgColor: 'bg-amber-500/10',
-      glowColor: 'group-hover:border-amber-500/50',
-      filterValue: 'Pending',
-    },
-    {
-      id: 'completed',
+      id: 'Completed',
       label: 'Completed',
       value: completed,
+      subtext: `${total > 0 ? Math.round((completed / total) * 100) : 0}% completion rate`,
       icon: CheckCircle2,
-      color: 'emerald',
-      borderColor: activeStatusFilter === 'Completed' ? 'border-emerald-500' : 'border-slate-800',
-      textColor: 'text-emerald-400',
-      bgColor: 'bg-emerald-500/10',
-      glowColor: 'group-hover:border-emerald-500/50',
-      filterValue: 'Completed',
+      boxBg: 'bg-[var(--box-green-bg)]',
+      boxColor: 'text-[var(--box-green-text)]',
     },
     {
-      id: 'overdue',
+      id: 'Pending',
+      label: 'Pending',
+      value: pending,
+      subtext: `${pending} remaining`,
+      icon: Clock,
+      boxBg: 'bg-[var(--box-yellow-bg)]',
+      boxColor: 'text-[var(--box-yellow-text)]',
+    },
+    {
+      id: 'Overdue',
       label: 'Overdue',
       value: overdue,
+      subtext: overdue > 0 ? 'Requires attention' : 'All on track',
       icon: AlertCircle,
-      color: 'rose',
-      borderColor: activeStatusFilter === 'Overdue' ? 'border-rose-500' : 'border-slate-800',
-      textColor: 'text-rose-400',
-      bgColor: 'bg-rose-500/10',
-      glowColor: 'group-hover:border-rose-500/50',
-      filterValue: 'Overdue',
+      boxBg: 'bg-[var(--box-red-bg)]',
+      boxColor: 'text-[var(--box-red-text)]',
     },
   ]
 
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
       {stats.map((stat) => {
         const Icon = stat.icon
-        const isSelected = activeStatusFilter === stat.filterValue
+        const isSelected = activeStatusFilter === stat.id
 
         return (
           <button
             key={stat.id}
             type="button"
-            onClick={() => onStatusFilterChange(stat.filterValue)}
-            className={`group text-left p-4 sm:p-5 rounded-2xl bg-gradient-to-b from-slate-900/80 to-slate-950/80 border transition-all duration-200 backdrop-blur-sm cursor-pointer shadow-lg hover:shadow-xl ${
-              stat.borderColor
-            } ${stat.glowColor} ${isSelected ? 'ring-1 ring-indigo-500/30 bg-slate-900' : ''}`}
+            id={`stat-card-${stat.id.toLowerCase()}`}
+            onClick={() => onStatusFilterChange?.(stat.id)}
+            className={`text-left p-4 sm:p-5 rounded-2xl border transition-all cursor-pointer ${
+              isSelected
+                ? 'bg-[var(--bg-surface)] border-[var(--accent-blue)] ring-2 ring-[var(--accent-blue-border)] shadow-sm'
+                : 'bg-[var(--bg-surface)] border-[var(--border-default)] hover:border-[var(--border-strong)] hover:shadow-card'
+            }`}
           >
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs sm:text-sm font-medium text-slate-400 group-hover:text-slate-300 transition-colors">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs sm:text-sm font-medium text-[var(--text-secondary)]">
                 {stat.label}
               </span>
-              <div className={`w-8 h-8 rounded-xl ${stat.bgColor} flex items-center justify-center transition-transform group-hover:scale-105`}>
-                <Icon className={`w-4 h-4 ${stat.textColor}`} />
+              <div className={`w-9 h-9 rounded-xl ${stat.boxBg} ${stat.boxColor} flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-105`}>
+                <Icon className="w-4.5 h-4.5 stroke-[2.2]" />
               </div>
             </div>
 
-            <div className="flex items-baseline space-x-2">
-              <span className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white font-mono">
+            <div className="flex flex-col">
+              <span className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[var(--text-primary)] font-mono">
                 {stat.value}
               </span>
-              <span className="text-[11px] text-slate-500">
-                {stat.id === 'total' ? 'tasks' : `${Math.round(total > 0 ? (stat.value / total) * 100 : 0)}%`}
+              <span className="text-[11px] text-[var(--text-tertiary)] mt-0.5">
+                {stat.subtext}
               </span>
             </div>
           </button>

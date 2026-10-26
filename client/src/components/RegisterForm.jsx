@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useAuth } from '../context/AuthContext.jsx'
-import { User, Mail, Lock, Eye, EyeOff, Loader2, AlertCircle, ArrowRight, Check } from 'lucide-react'
+import { User, Mail, Lock, Eye, EyeOff, Loader2, AlertCircle } from 'lucide-react'
 
 export default function RegisterForm({ onSwitchToLogin }) {
   const { register, authError, clearError } = useAuth()
@@ -59,37 +59,34 @@ export default function RegisterForm({ onSwitchToLogin }) {
     }
   }
 
-  const isPasswordMinLength = password.length >= 8
-  const doPasswordsMatch = password && confirmPassword && password === confirmPassword
-
   return (
-    <div className="w-full max-w-md mx-auto">
-      <div className="rounded-2xl bg-gradient-to-b from-slate-900/90 to-slate-950/90 border border-slate-800/90 p-8 shadow-2xl backdrop-blur-xl space-y-6">
+    <div className="w-full max-w-sm mx-auto">
+      <div className="rounded-[10px] bg-[var(--bg-surface)] border border-[var(--border-default)] p-6 sm:p-7 shadow-dropdown space-y-5 animate-fadeIn">
         {/* Form Header */}
-        <div className="text-center space-y-1.5">
-          <h2 className="text-2xl font-bold tracking-tight text-white">Create an account</h2>
-          <p className="text-xs text-slate-400">
-            Join TaskFlow to start managing your tasks
+        <div className="text-center space-y-1">
+          <h2 className="text-xl font-bold tracking-tight text-[var(--text-primary)]">Create Account</h2>
+          <p className="text-xs text-[var(--text-secondary)]">
+            Start managing your personal tasks
           </p>
         </div>
 
         {/* Server Auth Error Banner */}
         {authError && (
-          <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-start space-x-2.5 animate-fadeIn">
-            <AlertCircle className="w-4 h-4 text-rose-400 flex-shrink-0 mt-0.5" />
+          <div className="p-2.5 rounded-[6px] bg-[var(--tag-red-bg)] border border-[var(--tag-red-border)] text-[var(--tag-red-text)] text-xs flex items-start space-x-2 animate-fadeIn">
+            <AlertCircle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
             <div className="flex-1">{authError}</div>
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+        <form onSubmit={handleSubmit} className="space-y-3.5" noValidate>
           {/* Name Field */}
-          <div className="space-y-1.5">
-            <label className="block text-xs font-medium text-slate-300" htmlFor="register-name">
+          <div className="space-y-1">
+            <label className="block text-xs font-medium text-[var(--text-secondary)]" htmlFor="register-name">
               Full Name
             </label>
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-                <User className="w-4 h-4" />
+              <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-[var(--text-tertiary)]">
+                <User className="w-3.5 h-3.5" />
               </div>
               <input
                 id="register-name"
@@ -100,28 +97,28 @@ export default function RegisterForm({ onSwitchToLogin }) {
                   setName(e.target.value)
                   if (clientErrors.name) setClientErrors({ ...clientErrors, name: null })
                 }}
-                placeholder="Sarah Connor"
+                placeholder="Alex Chen"
                 disabled={isSubmitting}
-                className={`w-full pl-9 pr-3 py-2.5 rounded-xl bg-slate-950/60 border ${
-                  clientErrors.name ? 'border-rose-500/80 focus:border-rose-500 focus:ring-rose-500/20' : 'border-slate-800 focus:border-indigo-500 focus:ring-indigo-500/20'
-                } text-sm text-slate-100 placeholder:text-slate-600 focus:outline-none focus:ring-2 transition-all disabled:opacity-50`}
+                className={`w-full pl-8 pr-3 py-1.5 rounded-[6px] bg-[var(--bg-subtle)] border ${
+                  clientErrors.name 
+                    ? 'border-[var(--tag-red-border)] focus:border-[var(--tag-red-text)]' 
+                    : 'border-[var(--border-default)] focus:border-[var(--accent-blue)] focus:bg-[var(--bg-surface)]'
+                } text-xs text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-1 focus:ring-[var(--accent-blue)] transition-all disabled:opacity-50`}
               />
             </div>
             {clientErrors.name && (
-              <p className="text-[11px] text-rose-400 flex items-center space-x-1 mt-1">
-                <span>{clientErrors.name}</span>
-              </p>
+              <p className="text-[11px] text-[var(--tag-red-text)] mt-1">{clientErrors.name}</p>
             )}
           </div>
 
           {/* Email Field */}
-          <div className="space-y-1.5">
-            <label className="block text-xs font-medium text-slate-300" htmlFor="register-email">
+          <div className="space-y-1">
+            <label className="block text-xs font-medium text-[var(--text-secondary)]" htmlFor="register-email">
               Email Address
             </label>
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-                <Mail className="w-4 h-4" />
+              <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-[var(--text-tertiary)]">
+                <Mail className="w-3.5 h-3.5" />
               </div>
               <input
                 id="register-email"
@@ -132,28 +129,31 @@ export default function RegisterForm({ onSwitchToLogin }) {
                   setEmail(e.target.value)
                   if (clientErrors.email) setClientErrors({ ...clientErrors, email: null })
                 }}
-                placeholder="sarah@example.com"
+                placeholder="name@example.com"
                 disabled={isSubmitting}
-                className={`w-full pl-9 pr-3 py-2.5 rounded-xl bg-slate-950/60 border ${
-                  clientErrors.email ? 'border-rose-500/80 focus:border-rose-500 focus:ring-rose-500/20' : 'border-slate-800 focus:border-indigo-500 focus:ring-indigo-500/20'
-                } text-sm text-slate-100 placeholder:text-slate-600 focus:outline-none focus:ring-2 transition-all disabled:opacity-50`}
+                className={`w-full pl-8 pr-3 py-1.5 rounded-[6px] bg-[var(--bg-subtle)] border ${
+                  clientErrors.email 
+                    ? 'border-[var(--tag-red-border)] focus:border-[var(--tag-red-text)]' 
+                    : 'border-[var(--border-default)] focus:border-[var(--accent-blue)] focus:bg-[var(--bg-surface)]'
+                } text-xs text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-1 focus:ring-[var(--accent-blue)] transition-all disabled:opacity-50`}
               />
             </div>
             {clientErrors.email && (
-              <p className="text-[11px] text-rose-400 flex items-center space-x-1 mt-1">
-                <span>{clientErrors.email}</span>
-              </p>
+              <p className="text-[11px] text-[var(--tag-red-text)] mt-1">{clientErrors.email}</p>
             )}
           </div>
 
           {/* Password Field */}
-          <div className="space-y-1.5">
-            <label className="block text-xs font-medium text-slate-300" htmlFor="register-password">
-              Password
-            </label>
+          <div className="space-y-1">
+            <div className="flex items-center justify-between">
+              <label className="block text-xs font-medium text-[var(--text-secondary)]" htmlFor="register-password">
+                Password
+              </label>
+              <span className="text-[10px] text-[var(--text-tertiary)] font-mono">Min 8 chars</span>
+            </div>
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-                <Lock className="w-4 h-4" />
+              <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-[var(--text-tertiary)]">
+                <Lock className="w-3.5 h-3.5" />
               </div>
               <input
                 id="register-password"
@@ -164,37 +164,36 @@ export default function RegisterForm({ onSwitchToLogin }) {
                   setPassword(e.target.value)
                   if (clientErrors.password) setClientErrors({ ...clientErrors, password: null })
                 }}
-                placeholder="At least 8 characters"
+                placeholder="••••••••"
                 disabled={isSubmitting}
-                className={`w-full pl-9 pr-10 py-2.5 rounded-xl bg-slate-950/60 border ${
-                  clientErrors.password ? 'border-rose-500/80 focus:border-rose-500 focus:ring-rose-500/20' : 'border-slate-800 focus:border-indigo-500 focus:ring-indigo-500/20'
-                } text-sm text-slate-100 placeholder:text-slate-600 focus:outline-none focus:ring-2 transition-all disabled:opacity-50`}
+                className={`w-full pl-8 pr-9 py-1.5 rounded-[6px] bg-[var(--bg-subtle)] border ${
+                  clientErrors.password 
+                    ? 'border-[var(--tag-red-border)] focus:border-[var(--tag-red-text)]' 
+                    : 'border-[var(--border-default)] focus:border-[var(--accent-blue)] focus:bg-[var(--bg-surface)]'
+                } text-xs text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-1 focus:ring-[var(--accent-blue)] transition-all disabled:opacity-50`}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                tabIndex={-1}
-                className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-200 transition-colors"
+                className="absolute inset-y-0 right-0 pr-2.5 flex items-center text-[var(--text-tertiary)] hover:text-[var(--text-primary)] cursor-pointer"
                 aria-label={showPassword ? 'Hide password' : 'Show password'}
               >
-                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
               </button>
             </div>
             {clientErrors.password && (
-              <p className="text-[11px] text-rose-400 flex items-center space-x-1 mt-1">
-                <span>{clientErrors.password}</span>
-              </p>
+              <p className="text-[11px] text-[var(--tag-red-text)] mt-1">{clientErrors.password}</p>
             )}
           </div>
 
           {/* Confirm Password Field */}
-          <div className="space-y-1.5">
-            <label className="block text-xs font-medium text-slate-300" htmlFor="register-confirm-password">
+          <div className="space-y-1">
+            <label className="block text-xs font-medium text-[var(--text-secondary)]" htmlFor="register-confirm-password">
               Confirm Password
             </label>
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-                <Lock className="w-4 h-4" />
+              <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-[var(--text-tertiary)]">
+                <Lock className="w-3.5 h-3.5" />
               </div>
               <input
                 id="register-confirm-password"
@@ -205,34 +204,18 @@ export default function RegisterForm({ onSwitchToLogin }) {
                   setConfirmPassword(e.target.value)
                   if (clientErrors.confirmPassword) setClientErrors({ ...clientErrors, confirmPassword: null })
                 }}
-                placeholder="Re-enter your password"
+                placeholder="••••••••"
                 disabled={isSubmitting}
-                className={`w-full pl-9 pr-3 py-2.5 rounded-xl bg-slate-950/60 border ${
-                  clientErrors.confirmPassword ? 'border-rose-500/80 focus:border-rose-500 focus:ring-rose-500/20' : 'border-slate-800 focus:border-indigo-500 focus:ring-indigo-500/20'
-                } text-sm text-slate-100 placeholder:text-slate-600 focus:outline-none focus:ring-2 transition-all disabled:opacity-50`}
+                className={`w-full pl-8 pr-3 py-1.5 rounded-[6px] bg-[var(--bg-subtle)] border ${
+                  clientErrors.confirmPassword 
+                    ? 'border-[var(--tag-red-border)] focus:border-[var(--tag-red-text)]' 
+                    : 'border-[var(--border-default)] focus:border-[var(--accent-blue)] focus:bg-[var(--bg-surface)]'
+                } text-xs text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-1 focus:ring-[var(--accent-blue)] transition-all disabled:opacity-50`}
               />
             </div>
             {clientErrors.confirmPassword && (
-              <p className="text-[11px] text-rose-400 flex items-center space-x-1 mt-1">
-                <span>{clientErrors.confirmPassword}</span>
-              </p>
+              <p className="text-[11px] text-[var(--tag-red-text)] mt-1">{clientErrors.confirmPassword}</p>
             )}
-          </div>
-
-          {/* Live Validation Badges */}
-          <div className="pt-1 flex flex-wrap gap-2 text-[11px]">
-            <span className={`inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg border ${
-              isPasswordMinLength ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-slate-900 text-slate-400 border-slate-800'
-            }`}>
-              <Check className={`w-3 h-3 ${isPasswordMinLength ? 'text-emerald-400' : 'text-slate-500'}`} />
-              <span>8+ characters</span>
-            </span>
-            <span className={`inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg border ${
-              doPasswordsMatch ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-slate-900 text-slate-400 border-slate-800'
-            }`}>
-              <Check className={`w-3 h-3 ${doPasswordsMatch ? 'text-emerald-400' : 'text-slate-500'}`} />
-              <span>Passwords match</span>
-            </span>
           </div>
 
           {/* Submit Button */}
@@ -240,32 +223,28 @@ export default function RegisterForm({ onSwitchToLogin }) {
             type="submit"
             id="register-submit-btn"
             disabled={isSubmitting}
-            className="w-full py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 disabled:opacity-60 text-white font-medium text-sm transition-all shadow-lg shadow-indigo-600/30 flex items-center justify-center space-x-2 cursor-pointer mt-2"
+            className="w-full py-1.5 px-3 rounded-[6px] bg-[var(--accent-blue)] hover:bg-[var(--accent-blue-hover)] text-white text-xs font-medium shadow-xs transition-colors flex items-center justify-center space-x-1.5 cursor-pointer disabled:opacity-50 mt-2"
           >
             {isSubmitting ? (
               <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                <span>Creating account...</span>
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                <span>Creating Account...</span>
               </>
             ) : (
-              <>
-                <span>Complete Registration</span>
-                <ArrowRight className="w-4 h-4" />
-              </>
+              <span>Create Account</span>
             )}
           </button>
         </form>
 
         {/* Switch to Login */}
-        <div className="pt-2 border-t border-slate-800/80 text-center text-xs text-slate-400">
-          <span>Already have an account? </span>
+        <div className="text-center text-xs text-[var(--text-secondary)] pt-1 border-t border-[var(--border-subtle)]">
+          Already have an account?{' '}
           <button
             type="button"
-            id="switch-to-login-btn"
             onClick={onSwitchToLogin}
-            className="text-indigo-400 hover:text-indigo-300 font-semibold underline underline-offset-2 transition-colors cursor-pointer"
+            className="text-[var(--accent-blue-text)] hover:underline font-medium cursor-pointer"
           >
-            Sign in instead
+            Sign in
           </button>
         </div>
       </div>

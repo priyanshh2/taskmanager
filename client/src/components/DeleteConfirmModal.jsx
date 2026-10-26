@@ -18,51 +18,52 @@ export default function DeleteConfirmModal({ isOpen, onClose, onConfirm, task, i
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm transition-opacity"
+        className="fixed inset-0 bg-black/45 backdrop-blur-xs transition-opacity"
         onClick={!isDeleting ? onClose : undefined}
-      ></div>
+        aria-hidden="true"
+      />
 
       {/* Modal Content */}
-      <div className="relative w-full max-w-md rounded-2xl bg-[#0d121f] border border-slate-800 p-6 shadow-2xl z-10 space-y-5 animate-fadeIn">
+      <div className="relative w-full max-w-sm rounded-[10px] bg-[var(--bg-surface)] border border-[var(--border-default)] p-5 shadow-modal z-10 space-y-4 animate-fadeIn">
         <div className="flex items-start justify-between">
-          <div className="w-10 h-10 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 flex items-center justify-center flex-shrink-0">
-            <AlertTriangle className="w-5 h-5" />
+          <div className="w-8 h-8 rounded-[6px] bg-[var(--tag-red-bg)] border border-[var(--tag-red-border)] text-[var(--tag-red-text)] flex items-center justify-center flex-shrink-0">
+            <AlertTriangle className="w-4 h-4" />
           </div>
           <button
             type="button"
             onClick={onClose}
             disabled={isDeleting}
-            className="p-1 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors disabled:opacity-50 cursor-pointer"
+            className="p-1 rounded-[4px] text-[var(--text-tertiary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-colors disabled:opacity-50 cursor-pointer"
             aria-label="Close"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
-        <div className="space-y-2">
-          <h3 className="text-base font-bold text-white tracking-tight">Delete Task?</h3>
-          <p className="text-xs text-slate-400 leading-relaxed">
-            Are you sure you want to delete <strong className="text-slate-200">"{task.title}"</strong>? This action is permanent and cannot be undone.
+        <div className="space-y-1">
+          <h3 className="text-sm font-semibold text-[var(--text-primary)] tracking-tight">Delete Task?</h3>
+          <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
+            Are you sure you want to permanently delete <strong className="text-[var(--text-primary)]">"{task.title}"</strong>? This action cannot be undone.
           </p>
         </div>
 
-        <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800/80 text-[11px] text-slate-400 space-y-1">
+        <div className="p-2.5 rounded-[6px] bg-[var(--bg-subtle)] border border-[var(--border-subtle)] text-[11px] text-[var(--text-secondary)] space-y-1">
           <div className="flex items-center justify-between">
-            <span>Category:</span>
-            <span className="font-medium text-slate-300">{task.category}</span>
+            <span className="text-[var(--text-tertiary)]">Category:</span>
+            <span className="font-medium text-[var(--text-primary)]">{task.category}</span>
           </div>
           <div className="flex items-center justify-between">
-            <span>Status:</span>
-            <span className="font-medium text-slate-300">{task.status}</span>
+            <span className="text-[var(--text-tertiary)]">Status:</span>
+            <span className="font-medium text-[var(--text-primary)]">{task.status}</span>
           </div>
         </div>
 
-        <div className="flex items-center justify-end space-x-3 pt-2">
+        <div className="flex items-center justify-end space-x-2 pt-2 border-t border-[var(--border-subtle)]">
           <button
             type="button"
             onClick={onClose}
             disabled={isDeleting}
-            className="px-4 py-2 rounded-xl border border-slate-700 bg-slate-900 hover:bg-slate-800 text-slate-300 text-xs font-semibold transition-all cursor-pointer disabled:opacity-50"
+            className="px-3 py-1.5 rounded-[6px] border border-[var(--border-default)] bg-[var(--bg-subtle)] hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] text-xs font-medium transition-colors cursor-pointer disabled:opacity-50"
           >
             Cancel
           </button>
@@ -71,16 +72,16 @@ export default function DeleteConfirmModal({ isOpen, onClose, onConfirm, task, i
             id="confirm-delete-btn"
             onClick={onConfirm}
             disabled={isDeleting}
-            className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 active:bg-rose-700 text-white text-xs font-semibold shadow-lg shadow-rose-600/30 transition-all flex items-center space-x-2 cursor-pointer disabled:opacity-50"
+            className="px-3 py-1.5 rounded-[6px] bg-[var(--tag-red-text)] hover:opacity-90 active:opacity-100 text-white text-xs font-medium shadow-xs transition-opacity flex items-center space-x-1.5 cursor-pointer disabled:opacity-50"
           >
             {isDeleting ? (
               <>
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                <Loader2 className="w-3 h-3 animate-spin" />
                 <span>Deleting...</span>
               </>
             ) : (
               <>
-                <Trash2 className="w-3.5 h-3.5" />
+                <Trash2 className="w-3 h-3" />
                 <span>Delete Task</span>
               </>
             )}

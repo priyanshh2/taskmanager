@@ -2,16 +2,15 @@ import { useState } from 'react'
 import { isTaskOverdue, isTaskDueToday, formatDueDate } from '../utils/date.js'
 import { 
   Check, 
-  Clock, 
   Calendar, 
-  Tag, 
   AlertCircle, 
+  Clock, 
   Edit3, 
   Trash2, 
   Loader2, 
   ChevronDown, 
   ChevronUp, 
-  Flag 
+  Tag
 } from 'lucide-react'
 
 export default function TaskCard({ task, onStatusToggle, onEdit, onDelete, isTogglingStatus }) {
@@ -21,89 +20,87 @@ export default function TaskCard({ task, onStatusToggle, onEdit, onDelete, isTog
   const overdue = isTaskOverdue(task)
   const dueToday = isTaskDueToday(task)
 
-  // Priority color scheme
+  // Priority color tags
   const priorityStyles = {
-    High: 'bg-rose-500/10 text-rose-400 border-rose-500/20',
-    Medium: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
-    Low: 'bg-slate-500/10 text-slate-300 border-slate-500/20',
+    High: 'bg-rose-50 text-rose-600 border-rose-200 dark:bg-rose-950/40 dark:text-rose-400 dark:border-rose-900',
+    Medium: 'bg-amber-50 text-amber-600 border-amber-200 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-900',
+    Low: 'bg-slate-50 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700',
   }
 
   const priorityStyle = priorityStyles[task.priority] || priorityStyles.Medium
 
   return (
     <div
-      className={`rounded-2xl border transition-all duration-200 p-4 sm:p-5 backdrop-blur-sm ${
+      className={`group relative rounded-2xl border transition-all duration-150 p-4 sm:p-4.5 bg-[var(--bg-surface)] ${
         isCompleted
-          ? 'bg-slate-950/40 border-slate-800/60 opacity-80'
+          ? 'border-[var(--border-subtle)] opacity-75'
           : overdue
-          ? 'bg-gradient-to-r from-rose-950/20 via-slate-900/80 to-slate-950/80 border-rose-500/30 shadow-lg shadow-rose-950/10'
-          : 'bg-slate-900/80 border-slate-800 hover:border-slate-700 shadow-lg'
+          ? 'border-rose-200 dark:border-rose-900/60 shadow-xs'
+          : 'border-[var(--border-default)] hover:border-[var(--border-strong)] hover:shadow-card'
       }`}
     >
-      <div className="flex items-start justify-between gap-3">
-        {/* Left: Quick Status Toggle Checkbox */}
+      <div className="flex items-start gap-3.5">
+        {/* Status Checkbox Toggle */}
         <button
           type="button"
           onClick={() => onStatusToggle(task)}
           disabled={isTogglingStatus}
-          className={`mt-0.5 w-6 h-6 rounded-lg flex items-center justify-center border transition-all cursor-pointer flex-shrink-0 disabled:opacity-50 ${
+          className={`mt-0.5 w-5 h-5 rounded-lg flex items-center justify-center border transition-all cursor-pointer flex-shrink-0 disabled:opacity-50 ${
             isCompleted
-              ? 'bg-emerald-500 border-emerald-500 text-slate-950'
-              : 'border-slate-600 hover:border-emerald-400 bg-slate-950/50'
+              ? 'bg-[var(--accent-blue)] border-[var(--accent-blue)] text-white'
+              : 'border-[var(--border-strong)] hover:border-[var(--accent-blue)] bg-[var(--bg-canvas)]'
           }`}
           title={isCompleted ? 'Mark as Pending' : 'Mark as Completed'}
-          aria-label={isCompleted ? 'Mark as Pending' : 'Mark as Completed'}
+          aria-label={isCompleted ? `Mark ${task.title} as Pending` : `Mark ${task.title} as Completed`}
         >
           {isTogglingStatus ? (
-            <Loader2 className="w-3.5 h-3.5 animate-spin text-slate-400" />
+            <Loader2 className="w-3 h-3 animate-spin text-[var(--text-tertiary)]" />
           ) : isCompleted ? (
-            <Check className="w-4 h-4 stroke-[3]" />
+            <Check className="w-3.5 h-3.5 stroke-[3]" />
           ) : null}
         </button>
 
-        {/* Center: Task Information */}
-        <div className="flex-1 min-w-0 space-y-2">
-          {/* Title and Badges */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        {/* Main Content Details */}
+        <div className="flex-1 min-w-0 space-y-1.5">
+          {/* Title Row + Actions */}
+          <div className="flex items-start justify-between gap-2">
             <h3
-              className={`text-sm sm:text-base font-semibold tracking-tight break-words ${
-                isCompleted ? 'line-through text-slate-500' : 'text-slate-100'
+              className={`text-sm sm:text-base font-semibold tracking-tight break-words transition-colors leading-snug ${
+                isCompleted
+                  ? 'line-through text-[var(--text-tertiary)]'
+                  : 'text-[var(--text-primary)]'
               }`}
             >
               {task.title}
             </h3>
 
-            {/* Badges */}
-            <div className="flex items-center flex-wrap gap-1.5 flex-shrink-0">
-              {/* Category */}
-              <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-md bg-slate-800/90 border border-slate-700/60 text-slate-300 text-[11px] font-medium">
-                <Tag className="w-3 h-3 text-slate-400" />
-                <span>{task.category}</span>
-              </span>
-
-              {/* Priority */}
-              <span className={`inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-md border text-[11px] font-semibold ${priorityStyle}`}>
-                <Flag className="w-3 h-3" />
-                <span>{task.priority}</span>
-              </span>
-
-              {/* Status */}
-              <span
-                className={`inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-md text-[11px] font-semibold border ${
-                  isCompleted
-                    ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                    : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
-                }`}
+            {/* Actions: Edit & Delete */}
+            <div className="flex items-center space-x-1 flex-shrink-0">
+              <button
+                type="button"
+                onClick={() => onEdit(task)}
+                className="p-1.5 rounded-lg text-[var(--text-secondary)] hover:text-[var(--accent-blue-text)] hover:bg-[var(--bg-hover)] transition-colors cursor-pointer"
+                title="Edit task"
+                aria-label={`Edit task ${task.title}`}
               >
-                <span>●</span>
-                <span>{task.status}</span>
-              </span>
+                <Edit3 className="w-4 h-4" />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => onDelete(task)}
+                className="p-1.5 rounded-lg text-[var(--text-secondary)] hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
+                title="Delete task"
+                aria-label={`Delete task ${task.title}`}
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
             </div>
           </div>
 
-          {/* Optional Description Preview */}
+          {/* Description (Optional, collapsible) */}
           {task.description && (
-            <div className="text-xs text-slate-400 leading-relaxed">
+            <div className="text-xs text-[var(--text-secondary)] leading-relaxed">
               <p className={!isExpanded ? 'line-clamp-2' : ''}>
                 {task.description}
               </p>
@@ -111,7 +108,7 @@ export default function TaskCard({ task, onStatusToggle, onEdit, onDelete, isTog
                 <button
                   type="button"
                   onClick={() => setIsExpanded(!isExpanded)}
-                  className="mt-1 text-[11px] text-indigo-400 hover:text-indigo-300 font-medium inline-flex items-center space-x-0.5 cursor-pointer"
+                  className="mt-1 text-[11px] text-[var(--accent-blue-text)] hover:underline inline-flex items-center space-x-0.5 cursor-pointer font-medium"
                 >
                   <span>{isExpanded ? 'Show less' : 'Read more'}</span>
                   {isExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
@@ -120,56 +117,51 @@ export default function TaskCard({ task, onStatusToggle, onEdit, onDelete, isTog
             </div>
           )}
 
-          {/* Footer Metadata: Due Date & Actions */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-2 border-t border-slate-800/40 text-xs">
-            {/* Due date information */}
-            <div className="flex items-center flex-wrap gap-2 text-slate-400">
-              <span className="flex items-center space-x-1 text-[11px]">
-                <Calendar className="w-3.5 h-3.5 text-slate-500" />
-                <span>Due: {formatDueDate(task.dueDate)}</span>
+          {/* Metadata Row: Category, Priority, Due Date, Status */}
+          <div className="flex flex-wrap items-center gap-2 pt-1 text-xs">
+            {/* Category Property */}
+            <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-lg bg-[var(--bg-subtle)] border border-[var(--border-default)] text-[var(--text-secondary)] font-medium">
+              <Tag className="w-3 h-3 text-[var(--text-tertiary)]" />
+              <span>{task.category}</span>
+            </span>
+
+            {/* Priority Property */}
+            <span className={`inline-flex items-center px-2 py-0.5 rounded-lg border font-semibold text-[11px] ${priorityStyle}`}>
+              <span>{task.priority}</span>
+            </span>
+
+            {/* Status Indicator */}
+            <span
+              className={`inline-flex items-center space-x-1 px-2 py-0.5 rounded-lg border font-semibold text-[11px] ${
+                isCompleted
+                  ? 'bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-900'
+                  : 'bg-amber-50 text-amber-600 border-amber-200 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-900'
+              }`}
+            >
+              <span>{task.status}</span>
+            </span>
+
+            {/* Due Date */}
+            <span className="inline-flex items-center space-x-1 text-[var(--text-tertiary)] text-[11px]">
+              <Calendar className="w-3.5 h-3.5" />
+              <span className="text-[var(--text-secondary)] font-medium">{formatDueDate(task.dueDate)}</span>
+            </span>
+
+            {/* Overdue Warning Badge */}
+            {overdue && (
+              <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-lg bg-rose-50 border border-rose-200 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400 dark:border-rose-900 font-bold text-[10px]">
+                <AlertCircle className="w-3 h-3" />
+                <span>OVERDUE</span>
               </span>
+            )}
 
-              {/* Overdue Warning Badge */}
-              {overdue && (
-                <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-md bg-rose-500/15 border border-rose-500/30 text-rose-300 text-[10px] font-bold animate-pulse">
-                  <AlertCircle className="w-3 h-3" />
-                  <span>OVERDUE</span>
-                </span>
-              )}
-
-              {/* Due Today Badge */}
-              {dueToday && !isCompleted && (
-                <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-md bg-amber-500/15 border border-amber-500/30 text-amber-300 text-[10px] font-bold">
-                  <Clock className="w-3 h-3" />
-                  <span>DUE TODAY</span>
-                </span>
-              )}
-            </div>
-
-            {/* Action Buttons: Edit & Delete */}
-            <div className="flex items-center space-x-2 self-end sm:self-auto">
-              <button
-                type="button"
-                onClick={() => onEdit(task)}
-                className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 text-xs font-medium transition-all flex items-center space-x-1 cursor-pointer"
-                title="Edit task"
-                aria-label={`Edit task ${task.title}`}
-              >
-                <Edit3 className="w-3.5 h-3.5" />
-                <span>Edit</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => onDelete(task)}
-                className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-rose-500/20 text-slate-400 hover:text-rose-300 border border-slate-700 hover:border-rose-500/30 text-xs font-medium transition-all flex items-center space-x-1 cursor-pointer"
-                title="Delete task"
-                aria-label={`Delete task ${task.title}`}
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-                <span>Delete</span>
-              </button>
-            </div>
+            {/* Due Today Badge */}
+            {dueToday && !isCompleted && (
+              <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-lg bg-amber-50 border border-amber-200 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-900 font-semibold text-[10px]">
+                <Clock className="w-3 h-3" />
+                <span>DUE TODAY</span>
+              </span>
+            )}
           </div>
         </div>
       </div>

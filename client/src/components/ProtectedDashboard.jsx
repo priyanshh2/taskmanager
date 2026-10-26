@@ -2,26 +2,34 @@ import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useAuth } from '../context/AuthContext.jsx'
 import { taskAPI } from '../services/api.js'
 import { isTaskOverdue } from '../utils/date.js'
+import Sidebar from './Sidebar.jsx'
 import DashboardStats from './DashboardStats.jsx'
 import TaskFilters from './TaskFilters.jsx'
 import TaskCard from './TaskCard.jsx'
 import TaskModal from './TaskModal.jsx'
 import DeleteConfirmModal from './DeleteConfirmModal.jsx'
+import CalendarView from './CalendarView.jsx'
+import StatisticsView from './StatisticsView.jsx'
 import { 
   Plus, 
-  LogOut, 
-  Shield, 
-  User, 
+  Menu, 
   Loader2, 
   AlertCircle, 
   RefreshCw, 
-  Inbox, 
-  SearchX,
-  Sparkles
+  CheckCircle2, 
+  Bell, 
+  CheckSquare, 
+  Calendar as CalendarIcon, 
+  BarChart2, 
+  ArrowRight,
+  SearchX
 } from 'lucide-react'
 
 export default function ProtectedDashboard() {
   const { user, logout, handleUnauthorized } = useAuth()
+
+  // Navigation View: 'dashboard' | 'tasks' | 'calendar' | 'statistics'
+  const [currentView, setCurrentView] = useState('dashboard')
 
   // Task list & API states
   const [tasks, setTasks] = useState([])
@@ -29,10 +37,14 @@ export default function ProtectedDashboard() {
   const [error, setError] = useState(null)
   const [feedbackMessage, setFeedbackMessage] = useState(null)
 
-  // Filter & Search states
+  // Mobile sidebar drawer state
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+
+  // Filter & Search states (for Tasks page)
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState('All') // 'All' | 'Pending' | 'Completed' | 'Overdue'
   const [priorityFilter, setPriorityFilter] = useState('All') // 'All' | 'Low' | 'Medium' | 'High'
+  const [categoryFilter, setCategoryFilter] = useState('All')
 
   // Modal states
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -59,9 +71,31 @@ export default function ProtectedDashboard() {
     }
   }, [handleUnauthorized])
 
+  // Initial fetch on mount
   useEffect(() => {
-    fetchTasks()
-  }, [fetchTasks])
+    let isMounted = true
+    taskAPI.getTasks(handleUnauthorized)
+      .then((response) => {
+        if (!isMounted) return
+        if (response.success && Array.isArray(response.tasks)) {
+          setTasks(response.tasks)
+        } else {
+          setTasks([])
+        }
+      })
+      .catch((err) => {
+        if (isMounted) {
+          setError(err.message || 'Failed to load your tasks. Please try again.')
+        }
+      })
+      .finally(() => {
+        if (isMounted) setLoading(false)
+      })
+
+    return () => {
+      isMounted = false
+    }
+  }, [handleUnauthorized])
 
   // Clear feedback message after 4 seconds
   useEffect(() => {
@@ -80,14 +114,14 @@ export default function ProtectedDashboard() {
         setTasks((prev) =>
           prev.map((t) => ((t.id || t._id) === taskIdToUpdate ? response.task : t))
         )
-        setFeedbackMessage('Task updated successfully!')
+        setFeedbackMessage('Task updated successfully.')
       }
     } else {
       // Create new task
       const response = await taskAPI.createTask(taskPayload, handleUnauthorized)
       if (response.success && response.task) {
         setTasks((prev) => [response.task, ...prev])
-        setFeedbackMessage('New task created successfully!')
+        setFeedbackMessage('New task created successfully.')
       }
     }
   }
@@ -105,7 +139,7 @@ export default function ProtectedDashboard() {
           prev.map((t) => ((t.id || t._id) === taskId ? response.task : t))
         )
         setFeedbackMessage(
-          nextStatus === 'Completed' ? 'Task marked as completed! 🎉' : 'Task reopened as pending.'
+          nextStatus === 'Completed' ? 'Task marked as completed.' : 'Task reopened as pending.'
         )
       }
     } catch (err) {
@@ -133,10 +167,28 @@ export default function ProtectedDashboard() {
     }
   }
 
-  // Combined Search & Filter Logic
+  // Task Counts for Sidebar and Dashboard
+  const counts = useMemo(() => {
+    return {
+      total: tasks.length,
+      pending: tasks.filter((t) => t.status === 'Pending').length,
+      completed: tasks.filter((t) => t.status === 'Completed').length,
+      overdue: tasks.filter((t) => isTaskOverdue(t)).length,
+    }
+  }, [tasks])
+
+  // Dynamic categories
+  const categories = useMemo(() => {
+    const set = new Set()
+    tasks.forEach((t) => {
+      if (t.category) set.add(t.category)
+    })
+    return ['All', ...Array.from(set)]
+  }, [tasks])
+
+  // Filtered Tasks for Tasks View
   const filteredTasks = useMemo(() => {
     return tasks.filter((task) => {
-      // 1. Search Query filter (case-insensitive title match)
       if (searchQuery.trim()) {
         const query = searchQuery.trim().toLowerCase()
         const matchesTitle = task.title?.toLowerCase().includes(query)
@@ -144,7 +196,6 @@ export default function ProtectedDashboard() {
         if (!matchesTitle && !matchesCategory) return false
       }
 
-      // 2. Status filter
       if (statusFilter !== 'All') {
         if (statusFilter === 'Overdue') {
           if (!isTaskOverdue(task)) return false
@@ -153,237 +204,376 @@ export default function ProtectedDashboard() {
         }
       }
 
-      // 3. Priority filter
       if (priorityFilter !== 'All') {
         if (task.priority !== priorityFilter) return false
       }
 
+      if (categoryFilter !== 'All') {
+        if (task.category !== categoryFilter) return false
+      }
+
       return true
     })
-  }, [tasks, searchQuery, statusFilter, priorityFilter])
+  }, [tasks, searchQuery, statusFilter, priorityFilter, categoryFilter])
 
-  // Clear all active filters
+  // Clear active filters
   const handleClearFilters = () => {
     setSearchQuery('')
     setStatusFilter('All')
     setPriorityFilter('All')
+    setCategoryFilter('All')
+  }
+
+  // Time-appropriate greeting
+  const [greeting] = useState(() => {
+    const hour = new Date().getHours()
+    if (hour < 12) return 'Good morning'
+    if (hour < 18) return 'Good afternoon'
+    return 'Good evening'
+  })
+
+  // Open task modal with prefilled date
+  const handleNewTaskWithDate = (dateString) => {
+    setTaskToEdit({ dueDate: dateString })
+    setIsModalOpen(true)
   }
 
   return (
-    <div className="min-h-screen bg-[#090d16] text-slate-100 flex flex-col justify-between selection:bg-indigo-500 selection:text-white">
-      {/* Background Decorative Ambient Glows */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
-        <div className="absolute -top-40 -left-40 w-96 h-96 bg-indigo-600/10 rounded-full blur-[128px]"></div>
-        <div className="absolute top-1/3 -right-40 w-96 h-96 bg-violet-600/10 rounded-full blur-[128px]"></div>
-        <div className="absolute -bottom-40 left-1/3 w-96 h-96 bg-emerald-600/10 rounded-full blur-[128px]"></div>
-      </div>
+    <div className="min-h-screen flex bg-[var(--bg-canvas)] text-[var(--text-primary)]">
+      {/* 1. Persistent Sidebar Navigation */}
+      <Sidebar
+        user={user}
+        onLogout={logout}
+        currentView={currentView}
+        onSelectView={setCurrentView}
+        counts={counts}
+        mobileOpen={mobileMenuOpen}
+        onCloseMobile={() => setMobileMenuOpen(false)}
+      />
 
-      {/* Top Navigation */}
-      <header className="relative z-10 border-b border-slate-800/80 backdrop-blur-md bg-[#090d16]/80 sticky top-0">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          {/* Logo & Brand */}
-          <div className="flex items-center space-x-3">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-500 to-violet-500 flex items-center justify-center shadow-lg shadow-indigo-500/25 ring-1 ring-white/20">
-              <Shield className="w-5 h-5 text-white" />
-            </div>
-            <div className="flex items-center space-x-2">
-              <span className="text-xl font-bold tracking-tight text-white">TaskFlow</span>
-              <span className="text-xs px-2.5 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 font-medium border border-indigo-500/20">
-                Phase 4
-              </span>
-            </div>
-          </div>
-
-          {/* User Profile & Actions */}
-          <div className="flex items-center space-x-3">
-            <div className="hidden sm:flex items-center space-x-2 px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs">
-              <div className="w-6 h-6 rounded-lg bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold">
-                {user?.name ? user.name.charAt(0).toUpperCase() : <User className="w-3.5 h-3.5" />}
-              </div>
-              <div className="flex flex-col text-left">
-                <span className="text-slate-200 font-medium leading-none">{user?.name}</span>
-                <span className="text-[10px] text-slate-500 truncate max-w-[140px] mt-0.5">{user?.email}</span>
-              </div>
-            </div>
-
-            <button
-              id="logout-btn"
-              onClick={logout}
-              className="px-3 py-1.5 text-xs font-semibold rounded-xl bg-slate-800 hover:bg-rose-500/20 hover:text-rose-300 hover:border-rose-500/30 border border-slate-700/80 text-slate-300 transition-all flex items-center space-x-1.5 cursor-pointer shadow-sm"
-              title="Sign out of TaskFlow"
-            >
-              <LogOut className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Log out</span>
-            </button>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Container */}
-      <main className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 py-8 flex-1 w-full space-y-6">
-        {/* Header Action Row */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
-              Task Dashboard
-            </h1>
-            <p className="text-xs sm:text-sm text-slate-400 mt-1">
-              Organize, prioritize, and track your daily productivity
-            </p>
-          </div>
-
-          {/* Create Task Button */}
+      {/* 2. Main Content View Area */}
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Mobile Header Bar */}
+        <header className="md:hidden flex items-center justify-between px-4 h-14 border-b border-[var(--border-default)] bg-[var(--bg-surface)] sticky top-0 z-20">
           <button
-            id="create-task-btn"
+            type="button"
+            id="mobile-menu-btn"
+            onClick={() => setMobileMenuOpen(true)}
+            className="p-1.5 rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] cursor-pointer"
+            aria-label="Open sidebar menu"
+          >
+            <Menu className="w-5 h-5" />
+          </button>
+
+          <span className="font-bold text-sm tracking-tight text-[var(--text-primary)]">
+            TaskFlow
+          </span>
+
+          <button
             type="button"
             onClick={() => {
               setTaskToEdit(null)
               setIsModalOpen(true)
             }}
-            className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white text-xs sm:text-sm font-semibold shadow-lg shadow-indigo-600/30 transition-all flex items-center justify-center space-x-2 cursor-pointer self-start sm:self-auto"
+            className="p-1.5 rounded-lg bg-[var(--accent-blue)] text-white hover:bg-[var(--accent-blue-hover)] cursor-pointer"
+            aria-label="Quick Add Task"
           >
-            <Plus className="w-4 h-4" />
-            <span>Create Task</span>
+            <Plus className="w-4 h-4 stroke-[2.5]" />
           </button>
-        </div>
+        </header>
 
-        {/* Feedback / Notification Banner */}
-        {feedbackMessage && (
-          <div className="p-3.5 rounded-xl bg-indigo-500/10 border border-indigo-500/30 text-indigo-300 text-xs flex items-center justify-between animate-fadeIn shadow-sm">
-            <div className="flex items-center space-x-2">
-              <Sparkles className="w-4 h-4 text-indigo-400 flex-shrink-0" />
-              <span>{feedbackMessage}</span>
+        {/* Main Content Container */}
+        <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-8 py-6 sm:py-8 space-y-6">
+          {/* Universal Header with Top Right Quick Add Task & Bell */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-1">
+            <div>
+              {currentView === 'dashboard' ? (
+                <>
+                  <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[var(--text-primary)]">
+                    {greeting}, {user?.name || 'there'}!
+                  </h1>
+                  <p className="text-xs sm:text-sm text-[var(--text-secondary)] mt-1">
+                    Plan your work and keep moving forward
+                  </p>
+                </>
+              ) : currentView === 'tasks' ? (
+                <>
+                  <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[var(--text-primary)]">
+                    Tasks
+                  </h1>
+                  <p className="text-xs sm:text-sm text-[var(--text-secondary)] mt-1">
+                    Manage your tasks and stay organized
+                  </p>
+                </>
+              ) : currentView === 'calendar' ? null : null}
             </div>
-            <button
-              type="button"
-              onClick={() => setFeedbackMessage(null)}
-              className="text-slate-400 hover:text-slate-200 text-xs ml-2 cursor-pointer"
-            >
-              ✕
-            </button>
-          </div>
-        )}
 
-        {/* 1. Statistics Cards */}
-        <DashboardStats
-          tasks={tasks}
-          activeStatusFilter={statusFilter}
-          onStatusFilterChange={setStatusFilter}
-        />
-
-        {/* 2. Search & Filters Bar */}
-        <TaskFilters
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          statusFilter={statusFilter}
-          onStatusFilterChange={setStatusFilter}
-          priorityFilter={priorityFilter}
-          onPriorityFilterChange={setPriorityFilter}
-          onClearFilters={handleClearFilters}
-          totalMatching={filteredTasks.length}
-          totalTasks={tasks.length}
-        />
-
-        {/* 3. Task List Section */}
-        <div className="space-y-4">
-          {/* Loading State */}
-          {loading ? (
-            <div className="p-12 rounded-2xl bg-slate-900/40 border border-slate-800 text-center space-y-3">
-              <Loader2 className="w-8 h-8 text-indigo-500 animate-spin mx-auto" />
-              <p className="text-xs text-slate-400 font-mono">Loading your personal tasks...</p>
-            </div>
-          ) : error ? (
-            /* Error State with Retry */
-            <div className="p-8 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-center space-y-3">
-              <AlertCircle className="w-8 h-8 text-rose-400 mx-auto" />
-              <p className="text-sm font-semibold text-rose-200">Failed to load tasks</p>
-              <p className="text-xs text-rose-300/80 max-w-md mx-auto">{error}</p>
-              <button
-                type="button"
-                onClick={fetchTasks}
-                className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold transition-all inline-flex items-center space-x-1.5 cursor-pointer"
+            {/* Top Right Actions: Bell & Quick Add Task Button */}
+            <div className="hidden sm:flex items-center space-x-3 self-end sm:self-auto">
+              <div 
+                className="p-2 rounded-xl border border-[var(--border-default)] bg-[var(--bg-surface)] text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition-colors cursor-pointer"
+                title="Notifications"
               >
-                <RefreshCw className="w-3.5 h-3.5" />
-                <span>Retry</span>
-              </button>
-            </div>
-          ) : tasks.length === 0 ? (
-            /* Empty State (User has 0 tasks) */
-            <div className="p-12 sm:p-16 rounded-2xl bg-slate-900/40 border border-slate-800 text-center space-y-4">
-              <div className="w-14 h-14 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center mx-auto shadow-inner">
-                <Inbox className="w-7 h-7" />
+                <Bell className="w-4 h-4" />
               </div>
-              <div className="space-y-1">
-                <h3 className="text-base font-bold text-white">No tasks created yet</h3>
-                <p className="text-xs text-slate-400 max-w-sm mx-auto">
-                  You don't have any tasks in your personal workspace. Create your first task to begin tracking your productivity.
-                </p>
-              </div>
+
               <button
+                id="quick-add-task-btn"
                 type="button"
                 onClick={() => {
                   setTaskToEdit(null)
                   setIsModalOpen(true)
                 }}
-                className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-lg shadow-indigo-600/30 transition-all inline-flex items-center space-x-2 cursor-pointer"
+                className="px-4 py-2 rounded-xl bg-[var(--accent-blue)] hover:bg-[var(--accent-blue-hover)] text-white text-xs sm:text-sm font-semibold shadow-sm transition-colors flex items-center space-x-2 cursor-pointer"
               >
-                <Plus className="w-4 h-4" />
-                <span>Create Your First Task</span>
+                <Plus className="w-4 h-4 stroke-[2.5]" />
+                <span>Quick Add Task</span>
               </button>
             </div>
-          ) : filteredTasks.length === 0 ? (
-            /* No Matching Filter Results State */
-            <div className="p-12 rounded-2xl bg-slate-900/40 border border-slate-800 text-center space-y-4">
-              <div className="w-12 h-12 rounded-2xl bg-slate-800 text-slate-400 flex items-center justify-center mx-auto">
-                <SearchX className="w-6 h-6" />
-              </div>
-              <div className="space-y-1">
-                <h3 className="text-base font-bold text-white">No matching tasks found</h3>
-                <p className="text-xs text-slate-400 max-w-sm mx-auto">
-                  No tasks matched your current search and filter combination. Try adjusting your query or clear the active filters.
-                </p>
+          </div>
+
+          {/* Feedback / Notification Banner */}
+          {feedbackMessage && (
+            <div className="p-3 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900 text-[var(--accent-blue-text)] text-xs flex items-center justify-between animate-fadeIn shadow-xs">
+              <div className="flex items-center space-x-2">
+                <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
+                <span className="font-medium">{feedbackMessage}</span>
               </div>
               <button
                 type="button"
-                onClick={handleClearFilters}
-                className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-indigo-300 text-xs font-semibold transition-all inline-flex items-center space-x-2 cursor-pointer"
+                onClick={() => setFeedbackMessage(null)}
+                className="text-[var(--text-tertiary)] hover:text-[var(--text-primary)] text-xs ml-2 cursor-pointer"
+                aria-label="Dismiss notification"
               >
-                <span>Clear Filters</span>
+                ✕
               </button>
             </div>
-          ) : (
-            /* Task Cards Grid */
-            <div className="space-y-3">
-              {filteredTasks.map((task) => (
-                <TaskCard
-                  key={task.id || task._id}
-                  task={task}
-                  onStatusToggle={handleStatusToggle}
-                  onEdit={(t) => {
-                    setTaskToEdit(t)
-                    setIsModalOpen(true)
-                  }}
-                  onDelete={(t) => setTaskToDelete(t)}
-                  isTogglingStatus={togglingTaskId === (task.id || task._id)}
-                />
-              ))}
+          )}
+
+          {/* VIEW 1: DASHBOARD */}
+          {currentView === 'dashboard' && (
+            <div className="space-y-6 animate-fadeIn">
+              {/* Summary Statistics Cards */}
+              <DashboardStats
+                tasks={tasks}
+                activeStatusFilter={statusFilter}
+                onStatusFilterChange={(st) => {
+                  setStatusFilter(st)
+                  setCurrentView('tasks')
+                }}
+              />
+
+              {/* Tasks or Empty State */}
+              {loading ? (
+                <div className="py-16 rounded-2xl border border-[var(--border-default)] bg-[var(--bg-surface)] text-center space-y-3 shadow-card">
+                  <Loader2 className="w-6 h-6 text-[var(--accent-blue)] animate-spin mx-auto" />
+                  <p className="text-xs text-[var(--text-secondary)] font-mono">Loading your workspace...</p>
+                </div>
+              ) : error ? (
+                <div className="p-6 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 text-center space-y-2.5">
+                  <AlertCircle className="w-6 h-6 text-rose-500 mx-auto" />
+                  <p className="text-sm font-bold text-rose-600 dark:text-rose-400">Failed to load tasks</p>
+                  <p className="text-xs text-[var(--text-secondary)]">{error}</p>
+                  <button
+                    type="button"
+                    onClick={fetchTasks}
+                    className="px-4 py-2 rounded-xl border border-[var(--border-default)] bg-[var(--bg-surface)] text-xs font-semibold hover:bg-[var(--bg-hover)] transition-colors inline-flex items-center space-x-1.5 cursor-pointer"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5" />
+                    <span>Retry</span>
+                  </button>
+                </div>
+              ) : tasks.length === 0 ? (
+                /* Ready to get started empty state from Life Manager Image 4 */
+                <div className="py-14 px-6 rounded-2xl border border-[var(--border-default)] bg-[var(--bg-surface)] text-center space-y-4 shadow-card">
+                  <div className="w-14 h-14 rounded-2xl bg-blue-50 dark:bg-blue-950/50 text-[var(--accent-blue)] flex items-center justify-center mx-auto shadow-inner">
+                    <CheckSquare className="w-7 h-7 stroke-[2.2]" />
+                  </div>
+                  <div className="space-y-1">
+                    <h3 className="text-lg font-bold text-[var(--text-primary)]">Ready to get started?</h3>
+                    <p className="text-xs sm:text-sm text-[var(--text-secondary)] max-w-sm mx-auto">
+                      Create your first task and start organizing your day.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTaskToEdit(null)
+                      setIsModalOpen(true)
+                    }}
+                    className="px-5 py-2.5 rounded-xl bg-[var(--accent-blue)] hover:bg-[var(--accent-blue-hover)] text-white text-xs sm:text-sm font-semibold shadow-sm transition-colors inline-flex items-center space-x-2 cursor-pointer"
+                  >
+                    <Plus className="w-4 h-4 stroke-[2.5]" />
+                    <span>Create Your First Task</span>
+                  </button>
+                </div>
+              ) : (
+                /* Upcoming & Pending Tasks Overview */
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-base font-bold text-[var(--text-primary)] tracking-tight">
+                      Upcoming Tasks
+                    </h2>
+                    <button
+                      type="button"
+                      onClick={() => setCurrentView('tasks')}
+                      className="text-xs font-semibold text-[var(--accent-blue)] hover:underline inline-flex items-center space-x-1 cursor-pointer"
+                    >
+                      <span>View all tasks</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+
+                  <div className="space-y-2.5">
+                    {tasks.slice(0, 5).map((task) => (
+                      <TaskCard
+                        key={task.id || task._id}
+                        task={task}
+                        onStatusToggle={handleStatusToggle}
+                        onEdit={(t) => {
+                          setTaskToEdit(t)
+                          setIsModalOpen(true)
+                        }}
+                        onDelete={(t) => setTaskToDelete(t)}
+                        isTogglingStatus={togglingTaskId === (task.id || task._id)}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* 3 Feature Navigation Cards from Life Manager Image 4 */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 pt-2">
+                {/* 1. Manage Tasks */}
+                <button
+                  type="button"
+                  onClick={() => setCurrentView('tasks')}
+                  className="p-4 sm:p-5 rounded-2xl border border-[var(--border-default)] bg-[var(--bg-surface)] hover:border-[var(--border-strong)] hover:shadow-card transition-all text-left flex items-center space-x-3.5 cursor-pointer group"
+                >
+                  <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-[var(--accent-blue)] flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
+                    <CheckSquare className="w-5 h-5 stroke-[2.2]" />
+                  </div>
+                  <div>
+                    <h3 className="text-xs sm:text-sm font-bold text-[var(--text-primary)]">Manage Tasks</h3>
+                    <p className="text-[11px] text-[var(--text-secondary)] mt-0.5">View and manage all your tasks</p>
+                  </div>
+                </button>
+
+                {/* 2. Calendar View */}
+                <button
+                  type="button"
+                  onClick={() => setCurrentView('calendar')}
+                  className="p-4 sm:p-5 rounded-2xl border border-[var(--border-default)] bg-[var(--bg-surface)] hover:border-[var(--border-strong)] hover:shadow-card transition-all text-left flex items-center space-x-3.5 cursor-pointer group"
+                >
+                  <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
+                    <CalendarIcon className="w-5 h-5 stroke-[2.2]" />
+                  </div>
+                  <div>
+                    <h3 className="text-xs sm:text-sm font-bold text-[var(--text-primary)]">Calendar View</h3>
+                    <p className="text-[11px] text-[var(--text-secondary)] mt-0.5">See your tasks on calendar</p>
+                  </div>
+                </button>
+
+                {/* 3. Statistics */}
+                <button
+                  type="button"
+                  onClick={() => setCurrentView('statistics')}
+                  className="p-4 sm:p-5 rounded-2xl border border-[var(--border-default)] bg-[var(--bg-surface)] hover:border-[var(--border-strong)] hover:shadow-card transition-all text-left flex items-center space-x-3.5 cursor-pointer group"
+                >
+                  <div className="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
+                    <BarChart2 className="w-5 h-5 stroke-[2.2]" />
+                  </div>
+                  <div>
+                    <h3 className="text-xs sm:text-sm font-bold text-[var(--text-primary)]">Statistics</h3>
+                    <p className="text-[11px] text-[var(--text-secondary)] mt-0.5">View your productivity stats</p>
+                  </div>
+                </button>
+              </div>
             </div>
           )}
-        </div>
-      </main>
 
-      {/* Footer */}
-      <footer className="relative z-10 border-t border-slate-800/60 py-6 text-center text-xs text-slate-500">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <span>TaskFlow — Full-Stack Personal Task Manager</span>
-          <div className="flex items-center space-x-4 text-slate-400 font-mono text-[11px]">
-            <span>{tasks.length} Total Tasks</span>
-            <span>User: {user?.email}</span>
-          </div>
-        </div>
-      </footer>
+          {/* VIEW 2: TASKS */}
+          {currentView === 'tasks' && (
+            <div className="space-y-4 animate-fadeIn">
+              <TaskFilters
+                searchQuery={searchQuery}
+                onSearchChange={setSearchQuery}
+                statusFilter={statusFilter}
+                onStatusFilterChange={setStatusFilter}
+                priorityFilter={priorityFilter}
+                onPriorityFilterChange={setPriorityFilter}
+                categoryFilter={categoryFilter}
+                onCategoryFilterChange={setCategoryFilter}
+                categories={categories}
+                onClearFilters={handleClearFilters}
+                totalMatching={filteredTasks.length}
+                totalTasks={tasks.length}
+              />
 
-      {/* Task Create / Edit Modal */}
+              {loading ? (
+                <div className="py-16 rounded-2xl border border-[var(--border-default)] bg-[var(--bg-surface)] text-center space-y-3 shadow-card">
+                  <Loader2 className="w-6 h-6 text-[var(--accent-blue)] animate-spin mx-auto" />
+                  <p className="text-xs text-[var(--text-secondary)] font-mono">Loading tasks...</p>
+                </div>
+              ) : filteredTasks.length === 0 ? (
+                <div className="py-14 px-6 rounded-2xl border border-[var(--border-default)] bg-[var(--bg-surface)] text-center space-y-3 shadow-card">
+                  <div className="w-10 h-10 rounded-xl bg-[var(--bg-subtle)] text-[var(--text-tertiary)] flex items-center justify-center mx-auto">
+                    <SearchX className="w-5 h-5" />
+                  </div>
+                  <div className="space-y-1">
+                    <h3 className="text-sm font-bold text-[var(--text-primary)]">No matching tasks found</h3>
+                    <p className="text-xs text-[var(--text-secondary)] max-w-sm mx-auto">
+                      Try adjusting your search query, status, or priority filters.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleClearFilters}
+                    className="px-4 py-2 rounded-xl border border-[var(--border-default)] bg-[var(--bg-surface)] hover:bg-[var(--bg-hover)] text-[var(--accent-blue-text)] text-xs font-semibold transition-colors inline-flex items-center space-x-1.5 cursor-pointer shadow-xs"
+                  >
+                    <span>Reset Filters</span>
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-2.5">
+                  {filteredTasks.map((task) => (
+                    <TaskCard
+                      key={task.id || task._id}
+                      task={task}
+                      onStatusToggle={handleStatusToggle}
+                      onEdit={(t) => {
+                        setTaskToEdit(t)
+                        setIsModalOpen(true)
+                      }}
+                      onDelete={(t) => setTaskToDelete(t)}
+                      isTogglingStatus={togglingTaskId === (task.id || task._id)}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* VIEW 3: CALENDAR */}
+          {currentView === 'calendar' && (
+            <CalendarView
+              tasks={tasks}
+              onTaskClick={(t) => {
+                setTaskToEdit(t)
+                setIsModalOpen(true)
+              }}
+              onNewTaskWithDate={handleNewTaskWithDate}
+            />
+          )}
+
+          {/* VIEW 4: STATISTICS */}
+          {currentView === 'statistics' && (
+            <StatisticsView tasks={tasks} />
+          )}
+        </main>
+      </div>
+
+      {/* Task Create / Edit Modal Dialog */}
       <TaskModal
         isOpen={isModalOpen}
         onClose={() => {
@@ -394,7 +584,7 @@ export default function ProtectedDashboard() {
         taskToEdit={taskToEdit}
       />
 
-      {/* Task Delete Confirmation Modal */}
+      {/* Delete Confirmation Modal Dialog */}
       <DeleteConfirmModal
         isOpen={Boolean(taskToDelete)}
         onClose={() => setTaskToDelete(null)}
